@@ -1,42 +1,40 @@
 
 class WalkEnvironment():
     """
-    Example 1-Dimensional environment
+    19 state 1-dimensional deterministic environment with negative reward on the far left and positive reward on the far right
+        START STATE:
+        -CENTER (9)
+        TERMINAL STATES:
+        -'STATE' -1: -1 reward
+        -'STATE' 19: +1 reward
+        ACTIONS:
+        -ACTION 0: MOVE LEFT (-1)
+        -ACTION 1: MOVE RIGHT (+1)
     """
-
     def __init__(self):
-        """Declare environment variables."""
         self.num_states = 19
         self.start_state = 9
-        self.actions = [-1, 1]
+        self.actions = [-1, 1]  # Action space
 
-        # state we are in currently
-        self.current_state = None
+        self.current_state = None  # State the agent is currently in
 
     def env_start(self):
         """
-        Initialize environment variables.
+        Initialize environment variables
         """
         self.current_state = self.start_state
         return self.current_state
 
     def env_step(self, action):
         """
-        A step taken by the environment.
-
-        Args:
-            action: The action taken by the agent
-
-        Returns:
-            (float, state, Boolean): a tuple of the reward, state observation,
-                and boolean indicating if it's terminal.
+        Moves the agent through the environment
+        :param action: Action the agent takes (index)
+        :return: Reward from the action, current state of the agent, whether the current state is terminal
         """
-
-        # action = -1 for left; +1 for right
+        # Update current stated based on the action the agent took
         self.current_state += self.actions[action]
 
-        # This environment will give a +1 reward if the agent terminates on
-        # the right, otherwise 0 reward
+        # Check if the agent reached a terminal state
         if self.current_state == self.num_states:  # Far right of environment
             is_terminal = True
             reward = 1.0

@@ -2,6 +2,14 @@ import numpy as np
 
 
 class EpisodicRandomAgent():
+    """
+    Q(sigma) agent that uses an equiprobable random policy
+        POLICY:
+        -ACTION 0: 0.5 probability
+        -ACTION 1: 0.5 probability
+        SIGMA:
+        -EPISODE DYNAMIC: starts at 1, and reduced by a factor of sigma_factor every episode
+    """
     def __init__(self, n, alpha, gamma, sigma_factor):
         """
         :param n: Number of steps used in update
@@ -35,7 +43,7 @@ class EpisodicRandomAgent():
         """
         Starts the agent in the environment and makes an action
         :param state: Starting state (based on the environment)
-        :return: Action the agent takes
+        :return: Action the agent takes (index)
         """
         # Set previous state as starting state
         self.prev_state = state
@@ -48,7 +56,7 @@ class EpisodicRandomAgent():
     def make_action(self):
         """
         Determines the action that the agent takes (based on a policy)
-        :return: Action the agent takes
+        :return: Action the agent takes (index)
         """
         # Equiprobable random policy
         action = 0 if np.random.uniform(0, 1) < self.prob_left else 1
@@ -58,7 +66,7 @@ class EpisodicRandomAgent():
         """
         Takes another step in the environment by taking an action
         :param state: Current state the agent is in
-        :return: Action the agent takes
+        :return: Action the agent takes (index)
         """
         # Choose next action
         action = self.make_action()

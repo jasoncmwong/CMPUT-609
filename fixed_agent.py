@@ -2,6 +2,14 @@ import numpy as np
 
 
 class FixedRandomAgent():
+    """
+    Q(sigma) agent that uses an equiprobable random policy
+        POLICY:
+        -ACTION 0: 0.5 probability
+        -ACTION 1: 0.5 probability
+        SIGMA:
+        -CONSTANT: for all time
+    """
     def __init__(self, n, alpha, gamma, sigma):
         """
         :param n: Number of steps used in update
@@ -34,7 +42,7 @@ class FixedRandomAgent():
         """
         Starts the agent in the environment and makes an action
         :param state: Starting state (based on the environment)
-        :return: Action the agent takes
+        :return: Action the agent takes (index)
         """
         # Set previous state as starting state
         self.prev_state = state
@@ -47,7 +55,7 @@ class FixedRandomAgent():
     def make_action(self):
         """
         Determines the action that the agent takes (based on a policy)
-        :return: Action the agent takes
+        :return: Action the agent takes (index)
         """
         # Equiprobable random policy
         action = 0 if np.random.uniform(0, 1) < self.prob_left else 1
@@ -57,7 +65,7 @@ class FixedRandomAgent():
         """
         Takes another step in the environment by taking an action
         :param state: Current state the agent is in
-        :return: Action the agent takes
+        :return: Action the agent takes (index)
         """
         # Choose next action
         action = self.make_action()
