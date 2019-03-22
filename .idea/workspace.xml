@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="75af796e-0d4d-458a-bc07-07ceed0389ef" name="Default Changelist" comment="" />
+    <list default="true" id="75af796e-0d4d-458a-bc07-07ceed0389ef" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/random_walk.py" beforeDir="false" afterPath="$PROJECT_DIR$/random_walk.py" afterDir="false" />
+    </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -49,8 +52,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/random_walk.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="773">
-              <caret line="243" selection-start-line="243" selection-end-line="243" />
+            <state relative-caret-position="552">
+              <caret line="279" column="72" lean-forward="true" selection-start-line="279" selection-start-column="72" selection-end-line="279" selection-end-column="72" />
             </state>
           </provider>
         </entry>
@@ -76,13 +79,20 @@
       <find>Q</find>
       <find>agent</find>
       <find>rl_episode</find>
+      <find>rl_fixed_episode</find>
+      <find>rl_dynamic_episode</find>
     </findStrings>
     <replaceStrings>
       <replace>n_delta</replace>
       <replace>q</replace>
       <replace>fixed_agent</replace>
       <replace>rl_fixed_episode</replace>
+      <replace>rl_episode</replace>
+      <replace>rl_freq_episode</replace>
     </replaceStrings>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
@@ -114,18 +124,8 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="ProjectPane" />
       <pane id="Scope" />
-      <pane id="ProjectPane">
-        <subPane>
-          <expand>
-            <path>
-              <item name="Project" type="b2602c69:ProjectViewProjectNode" />
-              <item name="Project" type="462c0819:PsiDirectoryNode" />
-            </path>
-          </expand>
-          <select />
-        </subPane>
-      </pane>
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -236,6 +236,7 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
+    <editor active="true" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.15384616" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
@@ -247,7 +248,7 @@
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
-      <window_info anchor="bottom" id="Version Control" order="7" show_stripe_button="false" />
+      <window_info anchor="bottom" id="Version Control" order="7" />
       <window_info anchor="bottom" id="Terminal" order="8" weight="0.32936078" />
       <window_info anchor="bottom" id="Event Log" order="9" side_tool="true" />
       <window_info anchor="bottom" id="Python Console" order="10" />
@@ -418,8 +419,8 @@ b = sum(a)</expression-string>
     </entry>
     <entry file="file://$PROJECT_DIR$/random_walk.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="773">
-          <caret line="243" selection-start-line="243" selection-end-line="243" />
+        <state relative-caret-position="552">
+          <caret line="279" column="72" lean-forward="true" selection-start-line="279" selection-start-column="72" selection-end-line="279" selection-end-column="72" />
         </state>
       </provider>
     </entry>
