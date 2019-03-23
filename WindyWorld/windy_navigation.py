@@ -4,12 +4,9 @@ import matplotlib.pyplot as plt
 from fixed_agent import FixedRandomAgent
 from episodic_dynamic_agent import EpisodicRandomAgent
 from frequency_dynamic_agent import FrequencyRandomAgent
-from walk_environment import WalkEnvironment
+from windy_environment import WindyEnvironment
 
 # CONSTANTS
-NUM_STATES = 19
-NUM_ACTIONS = 2
-
 N = 3
 ALPHA = 0.4
 GAMMA = 1.0

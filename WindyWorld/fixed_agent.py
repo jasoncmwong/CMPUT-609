@@ -5,26 +5,26 @@ class FixedRandomAgent():
     """
     Q(sigma) agent that uses an equiprobable random policy
         POLICY:
-        -ACTION 0: 0.5 probability
-        -ACTION 1: 0.5 probability
+        -EPSILON-GREEDY: 0.1 epsilon
         SIGMA:
         -CONSTANT: for all time
     """
-    def __init__(self, n, alpha, gamma, sigma):
+    def __init__(self, n, alpha, gamma, sigma, epsilon):
         """
         :param n: Number of steps used in update
         :param alpha: Step size
         :param gamma: Discount factor
         :param sigma: Degree of sampling
         """
-        self.num_states = 19  # Number of states in the environment
-        self.num_actions = 2  # Number of actions that the agent can take
-        self.prob_left = 0.5  # Probability of moving left
+        self.num_rows = 7  # Number of y coordinates in the environment
+        self.num_cols = 10  # Number of x coordinates in the environment
+        self.num_actions = 4  # Number of actions that the agent can take
 
         self.n = n  # Number of steps
         self.alpha = alpha  # Step size
         self.gamma = gamma  # Discount factor
         self.sigma = sigma  # Degree of sampling
+        self.epsilon = 0.1  # Probability of choosing a random action
 
         self.prev_state = None  # Previous state the agent was in
         self.prev_action = None  # Previous action the agent took
@@ -35,8 +35,9 @@ class FixedRandomAgent():
         """
         Arbitrarily initializes the action-value function of the agent
         """
-        # Range of -0.5 to 0.5
-        self.q = np.random.rand(self.num_states, self.num_actions) - 0.5
+        # Initialize action-value function with all 0's
+        self.q = np.full((self.num_rows, self.num_cols, self.num_actions), 0, dtype=float)
+
 
     def agent_start(self, state):
         """
@@ -48,17 +49,29 @@ class FixedRandomAgent():
         self.prev_state = state
 
         # Choose action
-        self.prev_action = self.make_action()
+        self.prev_action = self.make_action(state)
 
         return self.prev_action
 
-    def make_action(self):
+    def make_action(self, state):
         """
-        Determines the action that the agent takes (based on a policy)
+        Determines the action that the agent takes (using an epsilon-greedy algorithm)
         :return: Action the agent takes (index)
         """
-        # Equiprobable random policy
-        action = 0 if np.random.uniform(0, 1) < self.prob_left else 1
+        action_prob = np.random.uniform(0, 1)
+
+        if action_prob <= self.epsilon:  # Take a random action
+            action = np.random.randint(self.num_actions)
+        else:  # Take a greedy action
+            action = -1
+            opt_q_val = -np.inf
+
+            # Iterate over all actions and store the best one based on maximizing q
+            for (i, q_val) in enumerate(self.q[state[0], state[1], :]):
+                if q_val > opt_q_val:
+                    opt_q_val = q_val
+                    action = i
+
         return action
 
     def agent_step(self, state):
@@ -68,7 +81,7 @@ class FixedRandomAgent():
         :return: Action the agent takes (index)
         """
         # Choose next action
-        action = self.make_action()
+        action = self.make_action(state)
 
         # Update state and action
         self.prev_state = state
