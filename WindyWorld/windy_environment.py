@@ -1,3 +1,4 @@
+import numpy as np
 
 class WindyEnvironment():
     """
@@ -20,12 +21,12 @@ class WindyEnvironment():
         self.num_cols = 10  # Number of columns in the grid world (x-direction)
         self.start_state = [3, 0]  # State the agent is in at the start of an episode
         self.terminal_state = [3, 7]  # Terminal state of the environment
-        self.actions = [  # Action space
+        self.actions = np.array([  # Action space
             [-1, 0],    # Move down
             [0, -1],    # Move left
             [1, 0],     # Move up
             [0, 1]      # Move right
-            ]
+            ])
         self.wind = [0, 0, 0, 1, 1, 1, 2, 2, 1, 0]  # Wind values for each column of the grid world
 
         self.current_state = None  # State the agent is currently in
