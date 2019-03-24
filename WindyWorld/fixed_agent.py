@@ -30,7 +30,6 @@ class FixedRandomAgent():
         self.prev_action = None  # Previous action the agent took
 
         self.q = None  # Estimates of the reward for each action
-        self.tot_rwd = None  # Total return accumulated over all episodes
 
     def agent_init(self):
         """
@@ -38,7 +37,6 @@ class FixedRandomAgent():
         """
         # Initialize action-value function with all 0's
         self.q = np.full((self.num_rows, self.num_cols, self.num_actions), 0, dtype=float)
-        self.tot_rwd = 0
 
     def agent_start(self, state):
         """
@@ -60,14 +58,12 @@ class FixedRandomAgent():
         :return: Action the agent takes (index), policy for that state
         """
         pi = np.full(self.num_actions, 0, dtype=float)
-        is_greedy = False
         action_prob = np.random.uniform(0, 1)
         greedy_actions = self.choose_greedy(state)
 
         if action_prob <= self.epsilon:  # Take a random action
             action = np.random.randint(self.num_actions)
         else:  # Take a greedy action
-            is_greedy = True
             greedy_index = np.random.randint(0, len(greedy_actions))
             action = greedy_actions[greedy_index]
 
