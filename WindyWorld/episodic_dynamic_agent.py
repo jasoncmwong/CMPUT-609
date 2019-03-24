@@ -10,7 +10,7 @@ class EpisodicRandomAgent():
         SIGMA:
         -EPISODE DYNAMIC: starts at 1, and reduced by a factor of sigma_factor every episode
     """
-    def __init__(self, n, alpha, gamma, sigma_factor):
+    def __init__(self, n, alpha, gamma, sigma_factor, epsilon):
         """
         :param n: Number of steps used in update
         :param alpha: Step size
@@ -21,17 +21,18 @@ class EpisodicRandomAgent():
         self.num_cols = 10  # Number of x coordinates in the environment
         self.num_actions = 4  # Number of actions that the agent can take
         self.sigma = 1  # Degree of sampling
-        self.epsilon = 0.1  # Probability of choosing a random action
 
         self.n = n  # Number of steps
         self.alpha = alpha  # Step size
         self.gamma = gamma  # Discount factor
         self.sigma_factor = sigma_factor
+        self.epsilon = epsilon  # Probability of choosing a random action
 
         self.prev_state = None  # Previous state the agent was in
         self.prev_action = None  # Previous action the agent took
 
         self.q = None  # Estimates of the reward for each action
+        self.tot_rwd = None  # Total return accumulated over all episodes
 
     def agent_init(self):
         """
@@ -39,6 +40,7 @@ class EpisodicRandomAgent():
         """
         # Initialize action-value function with all 0's
         self.q = np.full((self.num_rows, self.num_cols, self.num_actions), 0, dtype=float)
+        self.tot_rwd = 0
 
     def agent_start(self, state):
         """
@@ -64,14 +66,24 @@ class EpisodicRandomAgent():
         if action_prob <= self.epsilon:  # Take a random action
             action = np.random.randint(self.num_actions)
         else:  # Take a greedy action
-            action = -1
-            opt_q_val = -np.inf
+            action = self.choose_greedy(state)
 
-            # Iterate over all actions and store the best one based on maximizing q
-            for (i, q_val) in enumerate(self.q[state[0], state[1], :]):
-                if q_val > opt_q_val:
-                    opt_q_val = q_val
-                    action = i
+        return action
+
+    def choose_greedy(self, state):
+        """
+        Determines the optimal action according to q
+        :param state: State the agent is currently in
+        :return: Greedy action
+        """
+        action = -1
+        opt_q_val = -np.inf
+
+        # Iterate over all actions and store the best one based on maximizing q
+        for (i, q_val) in enumerate(self.q[state[0], state[1], :]):
+            if q_val > opt_q_val:
+                opt_q_val = q_val
+                action = i
 
         return action
 

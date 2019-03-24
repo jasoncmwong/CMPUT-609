@@ -24,12 +24,13 @@ class FixedRandomAgent():
         self.alpha = alpha  # Step size
         self.gamma = gamma  # Discount factor
         self.sigma = sigma  # Degree of sampling
-        self.epsilon = 0.1  # Probability of choosing a random action
+        self.epsilon = epsilon  # Probability of choosing a random action
 
         self.prev_state = None  # Previous state the agent was in
         self.prev_action = None  # Previous action the agent took
 
         self.q = None  # Estimates of the reward for each action
+        self.tot_rwd = None  # Total return accumulated over all episodes
 
     def agent_init(self):
         """
@@ -37,7 +38,7 @@ class FixedRandomAgent():
         """
         # Initialize action-value function with all 0's
         self.q = np.full((self.num_rows, self.num_cols, self.num_actions), 0, dtype=float)
-
+        self.tot_rwd = 0
 
     def agent_start(self, state):
         """
@@ -63,14 +64,24 @@ class FixedRandomAgent():
         if action_prob <= self.epsilon:  # Take a random action
             action = np.random.randint(self.num_actions)
         else:  # Take a greedy action
-            action = -1
-            opt_q_val = -np.inf
+            action = self.choose_greedy(state)
 
-            # Iterate over all actions and store the best one based on maximizing q
-            for (i, q_val) in enumerate(self.q[state[0], state[1], :]):
-                if q_val > opt_q_val:
-                    opt_q_val = q_val
-                    action = i
+        return action
+
+    def choose_greedy(self, state):
+        """
+        Determines the optimal action according to q
+        :param state: State the agent is currently in
+        :return: Greedy action
+        """
+        action = -1
+        opt_q_val = -np.inf
+
+        # Iterate over all actions and store the best one based on maximizing q
+        for (i, q_val) in enumerate(self.q[state[0], state[1], :]):
+            if q_val > opt_q_val:
+                opt_q_val = q_val
+                action = i
 
         return action
 
