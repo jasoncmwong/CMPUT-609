@@ -35,7 +35,7 @@ class WindyEnvironment():
         """
         Initialize environment variables
         """
-        self.current_state = self.start_state
+        self.current_state = self.start_state[:]  # Pass by value, not reference
         return self.current_state
 
     def env_step(self, action):
