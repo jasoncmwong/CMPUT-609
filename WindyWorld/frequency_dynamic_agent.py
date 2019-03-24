@@ -49,58 +49,63 @@ class FrequencyRandomAgent():
         """
         Starts the agent in the environment and makes an action
         :param state: Starting state (based on the environment)
-        :return: Action the agent takes (index), sigma for the state-action pair
+        :return: Action the agent takes (index), probability of taking that action, sigma for the state-action pair
         """
         # Set previous state as starting state
         self.prev_state = state
 
         # Choose action
-        self.prev_action = self.make_action(state)
+        (self.prev_action, probability) = self.make_action(state)
 
         # Update state-action distribution
         self.sa_distr[state[0]][state[1]][self.prev_action] += 1
 
-        return self.prev_action, self.sigma[state[0]][state[1]][self.prev_action]
+        return (self.prev_action, probability, self.sigma[state[0]][state[1]][self.prev_action])
 
     def make_action(self, state):
         """
         Determines the action that the agent takes (using an epsilon-greedy algorithm)
-        :return: Action the agent takes (index)
+        :return: Action the agent takes (index), policy for that state
         """
+        pi = np.full(self.num_actions, 0, dtype=float)
+        is_greedy = False
         action_prob = np.random.uniform(0, 1)
+        greedy_actions = self.choose_greedy(state)
 
         if action_prob <= self.epsilon:  # Take a random action
             action = np.random.randint(self.num_actions)
         else:  # Take a greedy action
-            action = self.choose_greedy(state)
+            is_greedy = True
+            greedy_index = np.random.randint(0, len(greedy_actions))
+            action = greedy_actions[greedy_index]
 
-        return action
+        # Determine policy for the current state
+        for i in range(self.num_actions):
+            if i not in greedy_actions:
+                pi[i] = self.epsilon / self.num_actions
+            else:
+                pi[i] = (1-self.epsilon)/len(greedy_actions) + self.epsilon/self.num_actions
+
+        return (action, pi)
 
     def choose_greedy(self, state):
         """
         Determines the optimal action according to q
         :param state: State the agent is currently in
-        :return: Greedy action
+        :return: Array of possible greedy actions
         """
-        action = -1
-        opt_q_val = -np.inf
+        greedy_actions = np.ravel(np.argwhere(self.q[state[0], state[1], :] == np.max(self.q[state[0], state[1], :])))
 
-        # Iterate over all actions and store the best one based on maximizing q
-        for (i, q_val) in enumerate(self.q[state[0], state[1], :]):
-            if q_val > opt_q_val:
-                opt_q_val = q_val
-                action = i
-
-        return action
+        return greedy_actions
 
     def agent_step(self, state):
         """
         Takes another step in the environment by taking an action
         :param state: Current state the agent is in
-        :return: Action the agent takes (index), sigma for the state-action pair
+        :return: Action the agent takes (index), policy for that state, sigma for the state-action pair
         """
         # Choose next action
-        action = self.make_action(state)
+        (action, pi) = self.make_action(state)
 
         # Update state and action
         self.prev_state = state
@@ -109,7 +114,7 @@ class FrequencyRandomAgent():
         # Update state-action distribution
         self.sa_distr[state[0]][state[1]][self.prev_action] += 1
 
-        return self.prev_action, self.sigma[state[0]][state[1]][self.prev_action]
+        return (self.prev_action, pi, self.sigma[state[0]][state[1]][self.prev_action])
 
     def agent_end(self):
         """
