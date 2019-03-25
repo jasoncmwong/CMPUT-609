@@ -58,14 +58,7 @@ class FixedRandomAgent():
         :return: Action the agent takes (index), policy for that state
         """
         pi = np.full(self.num_actions, 0, dtype=float)
-        action_prob = np.random.uniform(0, 1)
         greedy_actions = self.choose_greedy(state)
-
-        if action_prob <= self.epsilon:  # Take a random action
-            action = np.random.randint(self.num_actions)
-        else:  # Take a greedy action
-            greedy_index = np.random.randint(0, len(greedy_actions))
-            action = greedy_actions[greedy_index]
 
         # Determine policy for the current state
         for i in range(self.num_actions):
@@ -73,6 +66,8 @@ class FixedRandomAgent():
                 pi[i] = self.epsilon / self.num_actions
             else:
                 pi[i] = (1-self.epsilon)/len(greedy_actions) + self.epsilon/self.num_actions
+
+        action = np.random.choice(range(self.num_actions), p=pi)
 
         return (action, pi)
 

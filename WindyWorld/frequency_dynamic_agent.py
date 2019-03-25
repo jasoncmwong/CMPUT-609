@@ -53,12 +53,12 @@ class FrequencyRandomAgent():
         self.prev_state = state
 
         # Choose action
-        (self.prev_action, probability) = self.make_action(state)
+        (self.prev_action, pi) = self.make_action(state)
 
         # Update state-action distribution
         self.sa_distr[state[0]][state[1]][self.prev_action] += 1
 
-        return (self.prev_action, probability, self.sigma[state[0]][state[1]][self.prev_action])
+        return (self.prev_action, pi, self.sigma[state[0]][state[1]][self.prev_action])
 
     def make_action(self, state):
         """
@@ -66,14 +66,7 @@ class FrequencyRandomAgent():
         :return: Action the agent takes (index), policy for that state
         """
         pi = np.full(self.num_actions, 0, dtype=float)
-        action_prob = np.random.uniform(0, 1)
         greedy_actions = self.choose_greedy(state)
-
-        if action_prob <= self.epsilon:  # Take a random action
-            action = np.random.randint(self.num_actions)
-        else:  # Take a greedy action
-            greedy_index = np.random.randint(0, len(greedy_actions))
-            action = greedy_actions[greedy_index]
 
         # Determine policy for the current state
         for i in range(self.num_actions):
@@ -81,6 +74,8 @@ class FrequencyRandomAgent():
                 pi[i] = self.epsilon / self.num_actions
             else:
                 pi[i] = (1-self.epsilon)/len(greedy_actions) + self.epsilon/self.num_actions
+
+        action = np.random.choice(range(self.num_actions), p=pi)
 
         return (action, pi)
 
