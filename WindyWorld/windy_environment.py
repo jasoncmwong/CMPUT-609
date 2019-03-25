@@ -28,6 +28,16 @@ class WindyEnvironment():
             [0, 1]      # Move right
             ])
         self.wind = [0, 0, 0, 1, 1, 1, 2, 2, 1, 0]  # Wind values for each column of the grid world
+        self.stochasticity = 0.1  # Probability of agent moving to one of its 8 neighbouring states
+        self.nn = np.array([  # Nearest neighbours
+            [-1, 1],
+            [-1, 0],
+            [-1, -1],
+            [0, 1],
+            [0, -1],
+            [1, 1],
+            [1, 0],
+            [1, -1]])
 
         self.current_state = None  # State the agent is currently in
 
@@ -44,31 +54,42 @@ class WindyEnvironment():
         :param action: Action the agent takes (index)
         :return: Reward from the action, current state of the agent, whether the current state is terminal
         """
-        # Update current stated based on the action the agent took
-        curr_x = self.current_state[1]
-        self.current_state[0] += self.actions[action][0] + self.wind[curr_x]
-        self.current_state[1] += self.actions[action][1]
+        random_prob = np.random.uniform(0, 1)
+        if random_prob <= self.stochasticity:  # Ignore agent's action and move to one of the 8 neighbours
+            # Determine how the agent moves (from -1 to 1 in each direction, but not both 0)
+            random_nn = np.random.randint(0, len(self.nn))
+            random_y = self.nn[random_nn, 0]
+            random_x = self.nn[random_nn, 1]
+
+            # Move to one of the nearest neighbours
+            self.current_state[0] += random_y
+            self.current_state[1] += random_x
+        else:  # Perform agent's action
+            # Update current stated based on the action the agent took
+            curr_x = self.current_state[1]
+            self.current_state[0] += self.actions[action][0] + self.wind[curr_x]
+            self.current_state[1] += self.actions[action][1]
+
+        # Check if the agent fell out of the boundaries of the grid world
+        y_coord = self.current_state[0]
+        x_coord = self.current_state[1]
+
+        if y_coord >= self.num_rows:  # Agent went too far up
+            self.current_state[0] = self.num_rows - 1
+        elif y_coord < 0:  # Agent went too far down
+            self.current_state[0] = 0
+
+        if x_coord >= self.num_cols:  # Agent went too far right
+            self.current_state[1] = self.num_cols - 1
+        elif x_coord < 0:  # Agent went too far left
+            self.current_state[1] = 0
+
+        is_terminal = False
+        reward = -1.0
 
         # Check if the agent reached a terminal state
         if self.current_state == self.terminal_state:
             is_terminal = True
             reward = 0.0
-        else:
-            # Check if the agent fell out of the boundaries of the grid world
-            y_coord = self.current_state[0]
-            x_coord = self.current_state[1]
-
-            if y_coord >= self.num_rows:  # Agent went too far up
-                self.current_state[0] = self.num_rows - 1
-            elif y_coord < 0:  # Agent went too far down
-                self.current_state[0] = 0
-
-            if x_coord >= self.num_cols:  # Agent went too far right
-                self.current_state[1] = self.num_cols - 1
-            elif x_coord < 0:  # Agent went too far left
-                self.current_state[1] = 0
-
-            is_terminal = False
-            reward = -1.0
 
         return reward, self.current_state, is_terminal
