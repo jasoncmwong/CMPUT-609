@@ -10,38 +10,47 @@ class FrequencyRandomAgent():
         SIGMA:
         -FREQUENCY DYNAMIC: starts at 1, and modified after every episode based on the frequency distribution and sigma_factor
     """
-    def __init__(self, n, alpha, gamma, sigma_factor, use_mean):
+    def __init__(self, use_mean):
         """
-        :param n: Number of steps used in update
-        :param alpha: Step size
-        :param gamma: Discount factor
-        :param sigma_factor: Multiplicative factor used to reduce sigma
+        :param use_mean:  Flag on whether to use raw frequency distribution or mean/st.d in sigma calculation
         """
         self.num_states = 19  # Number of states in the environment
         self.num_actions = 2  # Number of actions that the agent can take
         self.prob_left = 0.5  # Probability of moving left
-        self.ep_num = 0
+        self.ep_num = 0  # Episode number tracker
         self.sigma = np.full((self.num_states, self.num_actions), 1, dtype=float)  # Degree of sampling
-        self.sa_distr = None  # Number of times state-action pairs are visited
 
-        self.n = n  # Number of steps
-        self.alpha = alpha  # Step size
-        self.gamma = gamma  # Discount factor
-        self.sigma_factor = sigma_factor  # Multiplicative factor that is used to reduce maximum sigma
         self.use_mean = use_mean  # Flag on whether to use raw frequency distribution or mean/st.d in sigma calculation
+
+        self.n = None  # Number of steps
+        self.alpha = None  # Step size
+        self.gamma = None  # Discount factor
+        self.sigma_factor = None  # Multiplicative factor that is used to reduce maximum sigma
+
+        self.q = None  # Estimates of the reward for each action
+        self.sa_distr = None  # Number of times state-action pairs are visited
 
         self.prev_state = None  # Previous state the agent was in
         self.prev_action = None  # Previous action the agent took
 
-        self.q = None  # Estimates of the reward for each action
-
-    def agent_init(self):
+    def agent_init(self, n, alpha, gamma, sigma, sigma_factor):
         """
         Arbitrarily initializes the action-value function of the agent
+
+        :param n: Number of steps used in update
+        :param alpha: Step size
+        :param gamma: Discount factor
+        :param sigma: Starting degree of sampling
+        :param sigma_factor: Multiplicative factor used to reduce sigma
         """
         # Range of -0.5 to 0.5
         self.q = np.random.rand(self.num_states, self.num_actions) - 0.5
         self.sa_distr = np.full((self.num_states, self.num_actions), 0)
+
+        self.n = n
+        self.alpha = alpha
+        self.gamma = gamma
+        self.sigma_factor = sigma_factor
 
     def agent_start(self, state):
         """

@@ -10,40 +10,46 @@ class EpisodicRandomAgent():
         SIGMA:
         -EPISODE DYNAMIC: starts at 1, and reduced by a factor of sigma_factor every episode
     """
-    def __init__(self, n, alpha, gamma, sigma_factor):
-        """
-        :param n: Number of steps used in update
-        :param alpha: Step size
-        :param gamma: Discount factor
-        :param sigma_factor: Multiplicative factor used to reduce sigma
-        """
+    def __init__(self):
         self.num_states = 19  # Number of states in the environment
         self.num_actions = 2  # Number of actions that the agent can take
         self.prob_left = 0.5  # Probability of moving left
-        self.sigma = 1  # Degree of sampling
 
-        self.n = n  # Number of steps
-        self.alpha = alpha  # Step size
-        self.gamma = gamma  # Discount factor
-        self.sigma_factor = sigma_factor
+        self.n = None  # Number of steps
+        self.alpha = None  # Step size
+        self.gamma = None  # Discount factor
+        self.sigma = None  # Degree of sampling
+        self.sigma_factor = None  # Multiplicative factor that is used to reduce maximum sigma
 
         self.prev_state = None  # Previous state the agent was in
         self.prev_action = None  # Previous action the agent took
 
         self.q = None  # Estimates of the reward for each action
 
-    def agent_init(self):
+    def agent_init(self, n, alpha, gamma, sigma, sigma_factor):
         """
         Arbitrarily initializes the action-value function of the agent
+
+        :param n: Number of steps used in update
+        :param alpha: Step size
+        :param gamma: Discount factor
+        :param sigma: Starting degree of sampling
+        :param sigma_factor: Multiplicative factor used to reduce sigma
         """
         # Range of -0.5 to 0.5
         self.q = np.random.rand(self.num_states, self.num_actions) - 0.5
+
+        self.n = n
+        self.alpha = alpha
+        self.gamma = gamma
+        self.sigma = np.full((self.num_states, self.num_actions), sigma, dtype=float)
+        self.sigma_factor = sigma_factor
 
     def agent_start(self, state):
         """
         Starts the agent in the environment and makes an action
         :param state: Starting state (based on the environment)
-        :return: Action the agent takes (index)
+        :return: Action the agent takes (index), sigma for the state-action pair
         """
         # Set previous state as starting state
         self.prev_state = state
@@ -51,7 +57,7 @@ class EpisodicRandomAgent():
         # Choose action
         self.prev_action = self.make_action()
 
-        return self.prev_action
+        return self.prev_action, self.sigma[self.prev_state][self.prev_action]
 
     def make_action(self):
         """
@@ -66,7 +72,7 @@ class EpisodicRandomAgent():
         """
         Takes another step in the environment by taking an action
         :param state: Current state the agent is in
-        :return: Action the agent takes (index)
+        :return: Action the agent takes (index), sigma for the state-action pair
         """
         # Choose next action
         action = self.make_action()
@@ -75,7 +81,7 @@ class EpisodicRandomAgent():
         self.prev_state = state
         self.prev_action = action
 
-        return self.prev_action
+        return self.prev_action, self.sigma[self.prev_state][self.prev_action]
 
     def agent_end(self):
         """
