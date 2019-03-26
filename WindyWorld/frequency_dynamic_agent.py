@@ -5,12 +5,11 @@ class FrequencyRandomAgent():
     """
     Q(sigma) agent that uses an equiprobable random policy
         POLICY:
-        -ACTION 0: 0.5 probability
-        -ACTION 1: 0.5 probability
+        -EPSILON-GREEDY
         SIGMA:
         -FREQUENCY DYNAMIC: starts at 1, and modified after every episode based on the frequency distribution and sigma_factor
     """
-    def __init__(self, n, alpha, gamma, sigma_factor, epsilon):
+    def __init__(self, n, alpha, gamma, sigma_factor, epsilon, use_mean):
         """
         :param n: Number of steps used in update
         :param alpha: Step size
@@ -27,8 +26,9 @@ class FrequencyRandomAgent():
         self.n = n  # Number of steps
         self.alpha = alpha  # Step size
         self.gamma = gamma  # Discount factor
-        self.sigma_factor = sigma_factor
-        self.epsilon = epsilon  # Probability of choosing a random action
+        self.sigma_factor = sigma_factor  # Multiplicative factor that is used to reduce maximum sigma
+        self.epsilon = epsilon  # Probability of agent taking a random action
+        self.use_mean = use_mean  # Flag on whether to use raw frequency distribution or mean/st.d in sigma calculation
 
         self.prev_state = None  # Previous state the agent was in
         self.prev_action = None  # Previous action the agent took
@@ -47,7 +47,7 @@ class FrequencyRandomAgent():
         """
         Starts the agent in the environment and makes an action
         :param state: Starting state (based on the environment)
-        :return: Action the agent takes (index), probability of taking that action, sigma for the state-action pair
+        :return: Action the agent takes (index), policy for that state, sigma for the state-action pair
         """
         # Set previous state as starting state
         self.prev_state = state
@@ -111,7 +111,28 @@ class FrequencyRandomAgent():
         """
         Signals the end of the episode for an agent.
         """
+        self.ep_num += 1
+
+        # Calculate current frequency distribution
         tot_visits = np.sum(self.sa_distr)
         freq_distr = self.sa_distr / tot_visits
-        self.sigma = (1 - freq_distr) * np.power(self.sigma_factor, self.ep_num)
-        self.ep_num += 1
+
+        if self.use_mean:  # Use mean and standard deviation thresholds
+            # Determine thresholds for sigma extremes
+            freq_mean = np.mean(freq_distr)
+            freq_std = np.std(freq_distr)
+            up_thresh = (freq_mean + freq_std) * np.power(self.sigma_factor, self.ep_num)
+            bot_thresh = (freq_mean - freq_std) * np.power(self.sigma_factor, self.ep_num)
+
+            # Set sigma according to thresholds
+            for i in range(self.num_states):
+                for j in range(self.num_actions):
+                    curr_freq = freq_distr[i][j]
+                    if curr_freq > up_thresh:  # Visited enough - perform expectation updates
+                        self.sigma[i][j] = 0
+                    elif curr_freq < bot_thresh:  # Not visited enough - perform full sampling
+                        self.sigma[i][j] = 1
+                    else:  # In the middle - use intermediate sigma
+                        self.sigma[i][j] = 1 - (curr_freq - bot_thresh)/(2*freq_std*np.power(self.sigma_factor, self.ep_num))
+        else:  # Use the raw frequency distribution reduced by the multiplicative factor
+            self.sigma = (1 - freq_distr) * np.power(self.sigma_factor, self.ep_num)
