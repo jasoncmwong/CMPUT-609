@@ -5,8 +5,7 @@ class EpisodicRandomAgent():
     """
     Q(sigma) agent that uses an equiprobable random policy
         POLICY:
-        -ACTION 0: 0.5 probability
-        -ACTION 1: 0.5 probability
+        -EPSILON-GREEDY
         SIGMA:
         -EPISODE DYNAMIC: starts at 1, and reduced by a factor of sigma_factor every episode
     """
@@ -44,7 +43,7 @@ class EpisodicRandomAgent():
         """
         Starts the agent in the environment and makes an action
         :param state: Starting state (based on the environment)
-        :return: Action the agent takes (index), probability of taking that action
+        :return: Action the agent takes (index), policy for that state, sigma for the state-action pair
         """
         # Set previous state as starting state
         self.prev_state = state

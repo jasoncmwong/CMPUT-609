@@ -5,7 +5,7 @@ class FixedRandomAgent():
     """
     Q(sigma) agent that uses an equiprobable random policy
         POLICY:
-        -EPSILON-GREEDY: 0.1 epsilon
+        -EPSILON-GREEDY
         SIGMA:
         -CONSTANT: for all time
     """
