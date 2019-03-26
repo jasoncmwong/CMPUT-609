@@ -10,7 +10,7 @@ class FrequencyRandomAgent():
         SIGMA:
         -FREQUENCY DYNAMIC: starts at 1, and modified after every episode based on the frequency distribution and sigma_factor
     """
-    def __init__(self, n, alpha, gamma, sigma_factor):
+    def __init__(self, n, alpha, gamma, sigma_factor, use_mean):
         """
         :param n: Number of steps used in update
         :param alpha: Step size
@@ -20,14 +20,15 @@ class FrequencyRandomAgent():
         self.num_states = 19  # Number of states in the environment
         self.num_actions = 2  # Number of actions that the agent can take
         self.prob_left = 0.5  # Probability of moving left
+        self.ep_num = 0
         self.sigma = np.full((self.num_states, self.num_actions), 1, dtype=float)  # Degree of sampling
-        self.sigma_factor = sigma_factor
         self.sa_distr = None  # Number of times state-action pairs are visited
 
         self.n = n  # Number of steps
         self.alpha = alpha  # Step size
         self.gamma = gamma  # Discount factor
-        self.ep_num = 0
+        self.sigma_factor = sigma_factor  # Multiplicative factor that is used to reduce maximum sigma
+        self.use_mean = use_mean  # Flag on whether to use raw frequency distribution or mean/st.d in sigma calculation
 
         self.prev_state = None  # Previous state the agent was in
         self.prev_action = None  # Previous action the agent took
@@ -90,7 +91,28 @@ class FrequencyRandomAgent():
         """
         Signals the end of the episode for an agent.
         """
+        self.ep_num += 1
+
+        # Calculate current frequency distribution
         tot_visits = np.sum(self.sa_distr)
         freq_distr = self.sa_distr / tot_visits
-        self.sigma = (1 - freq_distr) * np.power(self.sigma_factor, self.ep_num)
-        self.ep_num += 1
+
+        if self.use_mean:  # Use mean and standard deviation thresholds
+            # Determine thresholds for sigma extremes
+            freq_mean = np.mean(freq_distr)
+            freq_std = np.std(freq_distr)
+            up_thresh = (freq_mean + freq_std) * np.power(self.sigma_factor, self.ep_num)
+            bot_thresh = (freq_mean - freq_std) * np.power(self.sigma_factor, self.ep_num)
+
+            # Set sigma according to thresholds
+            for i in range(self.num_states):
+                for j in range(self.num_actions):
+                    curr_freq = freq_distr[i][j]
+                    if curr_freq > up_thresh:  # Visited enough - perform expectation updates
+                        self.sigma[i][j] = 0
+                    elif curr_freq < bot_thresh:  # Not visited enough - perform full sampling
+                        self.sigma[i][j] = 1
+                    else:  # In the middle - use intermediate sigma
+                        self.sigma[i][j] = 1 - (curr_freq - bot_thresh)/(2*freq_std*np.power(self.sigma_factor, self.ep_num))
+        else:  # Use the raw frequency distribution reduced by the multiplicative factor
+            self.sigma = (1 - freq_distr) * np.power(self.sigma_factor, self.ep_num)

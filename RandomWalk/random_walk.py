@@ -253,32 +253,53 @@ def main():
     # Average results over the total number of experiments (runs)
     mean_rms_ep = np.mean(rms_err_ep, axis=1)
 
-    #== DYNAMIC SIGMA (FREQUENCY) ==#
-    rms_err_freq = np.full((NUM_EPISODES, NUM_RUNS), 0, dtype=float)
+    #== DYNAMIC SIGMA (FREQUENCY, RAW) ==#
+    rms_err_freq_raw = np.full((NUM_EPISODES, NUM_RUNS), 0, dtype=float)
 
     # Perform experiment for NUM_RUNS times
     for run in range(NUM_RUNS):
-        frequency_agent = FrequencyRandomAgent(N, ALPHA, GAMMA, SIGMA_FACTOR)
+        freq_raw_agent = FrequencyRandomAgent(N, ALPHA, GAMMA, SIGMA_FACTOR, False)
         environment = WalkEnvironment()
-        frequency_agent.agent_init()
+        freq_raw_agent.agent_init()
 
         # Experiment consists of NUM_EPISODES episodes
         for j in range(NUM_EPISODES):
-            rl_freq_episode(frequency_agent, environment)
-            ep_q = frequency_agent.q
+            rl_freq_episode(freq_raw_agent, environment)
+            ep_q = freq_raw_agent.q
 
             # Determine RMSE for the current episode number
-            rms_err_freq[j][run] = calc_ep_rmse(analytic_soln, ep_q)
+            rms_err_freq_raw[j][run] = calc_ep_rmse(analytic_soln, ep_q)
 
     # Average results over the total number of experiments (runs)
-    mean_rms_freq = np.mean(rms_err_freq, axis=1)
+    mean_rms_freq_raw = np.mean(rms_err_freq_raw, axis=1)
+
+    #== DYNAMIC SIGMA (FREQUENCY, MEAN) ==#
+    rms_err_freq_mean = np.full((NUM_EPISODES, NUM_RUNS), 0, dtype=float)
+
+    # Perform experiment for NUM_RUNS times
+    for run in range(NUM_RUNS):
+        freq_mean_agent = FrequencyRandomAgent(N, ALPHA, GAMMA, SIGMA_FACTOR, True)
+        environment = WalkEnvironment()
+        freq_mean_agent.agent_init()
+
+        # Experiment consists of NUM_EPISODES episodes
+        for j in range(NUM_EPISODES):
+            rl_freq_episode(freq_mean_agent, environment)
+            ep_q = freq_mean_agent.q
+
+            # Determine RMSE for the current episode number
+            rms_err_freq_mean[j][run] = calc_ep_rmse(analytic_soln, ep_q)
+
+    # Average results over the total number of experiments (runs)
+    mean_rms_freq_mean = np.mean(rms_err_freq_mean, axis=1)
 
     # Plot final results
-    for k in range(np.size(mean_rms, 1)):
-        sigma_val = SIGMA[k]
-        plt.plot(episodes, mean_rms[:, k], label=(r'$\sigma = {}$'.format(sigma_val)))
+    # for k in range(np.size(mean_rms, 1)):
+    #     sigma_val = SIGMA[k]
+    #     plt.plot(episodes, mean_rms[:, k], label=(r'$\sigma = {}$'.format(sigma_val)))
     plt.plot(episodes, mean_rms_ep, label=r'Dynamic $\sigma$ (Episode)')
-    plt.plot(episodes, mean_rms_freq, label=r'Dynamic $\sigma$ (Frequency)')
+    plt.plot(episodes, mean_rms_freq_raw, label=r'Dynamic $\sigma$ (Frequency, Raw)')
+    plt.plot(episodes, mean_rms_freq_mean, label=r'Dynamic $\sigma$ (Frequency, Mean)')
     plt.xlabel('Episodes')
     plt.ylabel('RMS Error')
     plt.title(r'Q($\sigma$) Curves for 19-State Random Walk')
