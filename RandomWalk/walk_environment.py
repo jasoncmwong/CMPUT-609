@@ -1,5 +1,5 @@
 
-class WalkEnvironment():
+class WalkEnvironment:
     """
     19 state 1-dimensional deterministic environment with negative reward on the far left and positive reward on the far right
         START STATE:
