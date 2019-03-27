@@ -1,14 +1,14 @@
 import numpy as np
 
 
-class EpisodicRandomAgent():
+class EpisodicRandomAgent:
     """
     Q(sigma) agent that uses an equiprobable random policy
         POLICY:
         -ACTION 0: 0.5 probability
         -ACTION 1: 0.5 probability
         SIGMA:
-        -EPISODE DYNAMIC: starts at 1, and reduced by a factor of sigma_factor every episode
+        -EPISODE DYNAMIC: starts at sigma, and reduced by a factor of sigma_factor every episode
     """
     def __init__(self, n, alpha, gamma, sigma, sigma_factor):
         """
@@ -25,7 +25,7 @@ class EpisodicRandomAgent():
         self.n = n  # Number of steps
         self.alpha = alpha  # Step size
         self.gamma = gamma  # Discount factor
-        self.sigma = np.full((self.num_states, self.num_actions), sigma, dtype=float)  # Degree of sampling
+        self.sigma = np.full(self.num_states, sigma, dtype=float)  # Starting degree of sampling
         self.sigma_factor = sigma_factor  # Multiplicative factor that is used to reduce maximum sigma
 
         self.prev_state = None  # Previous state the agent was in
@@ -35,7 +35,7 @@ class EpisodicRandomAgent():
 
     def agent_reset(self):
         """
-        Arbitrarily initializes the action-value function of the agent
+        Resets the action-value function of the agent
         """
         # Range of -0.5 to 0.5
         self.q = np.random.rand(self.num_states, self.num_actions) - 0.5
@@ -52,7 +52,7 @@ class EpisodicRandomAgent():
         # Choose action
         self.prev_action = self.make_action()
 
-        return self.prev_action, self.sigma[self.prev_state][self.prev_action]
+        return self.prev_action, self.sigma[self.prev_state]
 
     def make_action(self):
         """
@@ -76,7 +76,7 @@ class EpisodicRandomAgent():
         self.prev_state = state
         self.prev_action = action
 
-        return self.prev_action, self.sigma[self.prev_state][self.prev_action]
+        return self.prev_action, self.sigma[self.prev_state]
 
     def agent_end(self):
         """
