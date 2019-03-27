@@ -1,7 +1,7 @@
 import numpy as np
 
 
-class FrequencyRandomAgent():
+class FrequencyMeanRandomAgent():
     """
     Q(sigma) agent that uses an equiprobable random policy
         POLICY:
@@ -10,47 +10,38 @@ class FrequencyRandomAgent():
         SIGMA:
         -FREQUENCY DYNAMIC: starts at 1, and modified after every episode based on the frequency distribution and sigma_factor
     """
-    def __init__(self, use_mean):
+    def __init__(self, n, alpha, gamma, sigma, sigma_factor):
         """
-        :param use_mean:  Flag on whether to use raw frequency distribution or mean/st.d in sigma calculation
-        """
-        self.num_states = 19  # Number of states in the environment
-        self.num_actions = 2  # Number of actions that the agent can take
-        self.prob_left = 0.5  # Probability of moving left
-        self.ep_num = 0  # Episode number tracker
-        self.sigma = np.full((self.num_states, self.num_actions), 1, dtype=float)  # Degree of sampling
-
-        self.use_mean = use_mean  # Flag on whether to use raw frequency distribution or mean/st.d in sigma calculation
-
-        self.n = None  # Number of steps
-        self.alpha = None  # Step size
-        self.gamma = None  # Discount factor
-        self.sigma_factor = None  # Multiplicative factor that is used to reduce maximum sigma
-
-        self.q = None  # Estimates of the reward for each action
-        self.sa_distr = None  # Number of times state-action pairs are visited
-
-        self.prev_state = None  # Previous state the agent was in
-        self.prev_action = None  # Previous action the agent took
-
-    def agent_init(self, n, alpha, gamma, sigma, sigma_factor):
-        """
-        Arbitrarily initializes the action-value function of the agent
-
         :param n: Number of steps used in update
         :param alpha: Step size
         :param gamma: Discount factor
         :param sigma: Starting degree of sampling
         :param sigma_factor: Multiplicative factor used to reduce sigma
         """
+        self.num_states = 19  # Number of states in the environment
+        self.num_actions = 2  # Number of actions that the agent can take
+        self.prob_left = 0.5  # Probability of moving left
+        self.ep_num = 0  # Episode number tracker
+        self.sigma = np.full((self.num_states, self.num_actions), sigma, dtype=float)  # Starting degree of sampling
+
+        self.n = n  # Number of steps
+        self.alpha = alpha  # Step size
+        self.gamma = gamma  # Discount factor
+        self.sigma_factor = sigma_factor  # Multiplicative factor that is used to reduce maximum sigma
+
+        self.q = None  # Estimates of the reward for each state-action pair
+        self.sa_distr = None  # Number of times state-action pairs are visited
+
+        self.prev_state = None  # Previous state the agent was in
+        self.prev_action = None  # Previous action the agent took
+
+    def agent_reset(self):
+        """
+        Arbitrarily initializes the action-value function of the agent
+        """
         # Range of -0.5 to 0.5
         self.q = np.random.rand(self.num_states, self.num_actions) - 0.5
         self.sa_distr = np.full((self.num_states, self.num_actions), 0)
-
-        self.n = n
-        self.alpha = alpha
-        self.gamma = gamma
-        self.sigma_factor = sigma_factor
 
     def agent_start(self, state):
         """
@@ -106,22 +97,19 @@ class FrequencyRandomAgent():
         tot_visits = np.sum(self.sa_distr)
         freq_distr = self.sa_distr / tot_visits
 
-        if self.use_mean:  # Use mean and standard deviation thresholds
-            # Determine thresholds for sigma extremes
-            freq_mean = np.mean(freq_distr)
-            freq_std = np.std(freq_distr)
-            up_thresh = (freq_mean + freq_std) * np.power(self.sigma_factor, self.ep_num)
-            bot_thresh = (freq_mean - freq_std) * np.power(self.sigma_factor, self.ep_num)
+        # Determine thresholds for sigma extremes
+        freq_mean = np.mean(freq_distr)
+        freq_std = np.std(freq_distr)
+        up_thresh = (freq_mean + freq_std) * np.power(self.sigma_factor, self.ep_num)
+        bot_thresh = (freq_mean - freq_std) * np.power(self.sigma_factor, self.ep_num)
 
-            # Set sigma according to thresholds
-            for i in range(self.num_states):
-                for j in range(self.num_actions):
-                    curr_freq = freq_distr[i][j]
-                    if curr_freq > up_thresh:  # Visited enough - perform expectation updates
-                        self.sigma[i][j] = 0
-                    elif curr_freq < bot_thresh:  # Not visited enough - perform full sampling
-                        self.sigma[i][j] = 1
-                    else:  # In the middle - use intermediate sigma
-                        self.sigma[i][j] = 1 - (curr_freq - bot_thresh)/(2*freq_std*np.power(self.sigma_factor, self.ep_num))
-        else:  # Use the raw frequency distribution reduced by the multiplicative factor
-            self.sigma = (1 - freq_distr) * np.power(self.sigma_factor, self.ep_num)
+        # Set sigma according to thresholds
+        for i in range(self.num_states):
+            for j in range(self.num_actions):
+                curr_freq = freq_distr[i][j]
+                if curr_freq > up_thresh:  # Visited enough - perform expectation updates
+                    self.sigma[i][j] = 0
+                elif curr_freq < bot_thresh:  # Not visited enough - perform full sampling
+                    self.sigma[i][j] = 1
+                else:  # In the middle - use intermediate sigma
+                    self.sigma[i][j] = 1 - (curr_freq - bot_thresh)/(2*freq_std*np.power(self.sigma_factor, self.ep_num))

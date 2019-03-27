@@ -1,49 +1,47 @@
 import numpy as np
 
 
-class EpisodicRandomAgent():
+class FrequencyRawRandomAgent():
     """
     Q(sigma) agent that uses an equiprobable random policy
         POLICY:
         -ACTION 0: 0.5 probability
         -ACTION 1: 0.5 probability
         SIGMA:
-        -EPISODE DYNAMIC: starts at 1, and reduced by a factor of sigma_factor every episode
+        -FREQUENCY DYNAMIC: starts at 1, and modified after every episode based on the frequency distribution and sigma_factor
     """
-    def __init__(self):
-        self.num_states = 19  # Number of states in the environment
-        self.num_actions = 2  # Number of actions that the agent can take
-        self.prob_left = 0.5  # Probability of moving left
-
-        self.n = None  # Number of steps
-        self.alpha = None  # Step size
-        self.gamma = None  # Discount factor
-        self.sigma = None  # Degree of sampling
-        self.sigma_factor = None  # Multiplicative factor that is used to reduce maximum sigma
-
-        self.prev_state = None  # Previous state the agent was in
-        self.prev_action = None  # Previous action the agent took
-
-        self.q = None  # Estimates of the reward for each action
-
-    def agent_init(self, n, alpha, gamma, sigma, sigma_factor):
+    def __init__(self, n, alpha, gamma, sigma, sigma_factor):
         """
-        Arbitrarily initializes the action-value function of the agent
-
         :param n: Number of steps used in update
         :param alpha: Step size
         :param gamma: Discount factor
         :param sigma: Starting degree of sampling
         :param sigma_factor: Multiplicative factor used to reduce sigma
         """
+        self.num_states = 19  # Number of states in the environment
+        self.num_actions = 2  # Number of actions that the agent can take
+        self.prob_left = 0.5  # Probability of moving left
+        self.ep_num = 0  # Episode number tracker
+        self.sigma = np.full((self.num_states, self.num_actions), sigma, dtype=float)  # Starting degree of sampling
+
+        self.n = n  # Number of steps
+        self.alpha = alpha  # Step size
+        self.gamma = gamma  # Discount factor
+        self.sigma_factor = sigma_factor  # Multiplicative factor that is used to reduce maximum sigma
+
+        self.q = None  # Estimates of the reward for each state-action pair
+        self.sa_distr = None  # Number of times state-action pairs are visited
+
+        self.prev_state = None  # Previous state the agent was in
+        self.prev_action = None  # Previous action the agent took
+
+    def agent_reset(self):
+        """
+        Arbitrarily initializes the action-value function of the agent
+        """
         # Range of -0.5 to 0.5
         self.q = np.random.rand(self.num_states, self.num_actions) - 0.5
-
-        self.n = n
-        self.alpha = alpha
-        self.gamma = gamma
-        self.sigma = np.full((self.num_states, self.num_actions), sigma, dtype=float)
-        self.sigma_factor = sigma_factor
+        self.sa_distr = np.full((self.num_states, self.num_actions), 0)
 
     def agent_start(self, state):
         """
@@ -56,6 +54,9 @@ class EpisodicRandomAgent():
 
         # Choose action
         self.prev_action = self.make_action()
+
+        # Update state-action distribution
+        self.sa_distr[self.prev_state][self.prev_action] += 1
 
         return self.prev_action, self.sigma[self.prev_state][self.prev_action]
 
@@ -81,11 +82,20 @@ class EpisodicRandomAgent():
         self.prev_state = state
         self.prev_action = action
 
+        # Update state-action distribution
+        self.sa_distr[self.prev_state][self.prev_action] += 1
+
         return self.prev_action, self.sigma[self.prev_state][self.prev_action]
 
     def agent_end(self):
         """
         Signals the end of the episode for an agent.
         """
-        # Reduce sigma by a constant factor
-        self.sigma *= self.sigma_factor
+        self.ep_num += 1
+
+        # Calculate current frequency distribution
+        tot_visits = np.sum(self.sa_distr)
+        freq_distr = self.sa_distr / tot_visits
+
+        # Set sigma according to raw frequency distribution
+        self.sigma = (1 - freq_distr) * np.power(self.sigma_factor, self.ep_num)
