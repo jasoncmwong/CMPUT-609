@@ -5,6 +5,8 @@ from fixed_agent import FixedRandomAgent
 from episodic_dynamic_agent import EpisodicRandomAgent
 from frequency_dynamic_agent import FrequencyRandomAgent
 from windy_environment import WindyEnvironment
+from multiprocessing import Pool, freeze_support, cpu_count
+from functools import partial
 
 # CONSTANTS
 NUM_ACTIONS = 4
@@ -134,7 +136,7 @@ def rl_freq_episode(agent, environment):
 
     # Initialize environment and agent
     start_state = environment.env_start()  # S_0
-    (start_action, start_sigma) = agent.agent_start(start_state)  # A_0
+    (start_action, start_pi, start_sigma) = agent.agent_start(start_state)  # A_0
 
     # Store starting state and action
     n_state.append(start_state)
