@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 from multiprocessing import Pool, freeze_support, cpu_count
-from functools import partial
+import itertools
 
 from episodic_agent import EpisodicRandomAgent
 from frequency_raw_agent import FrequencyRawRandomAgent
@@ -22,8 +22,8 @@ SIGMA = np.array([0, 0.25, 0.5, 0.75, 1])
 SIGMA_FACTOR = 0.95
 
 # Experiment
-NUM_EPISODES = 100
-NUM_RUNS = 10
+NUM_EPISODES = 250
+NUM_RUNS = 100
 ANALYTIC_SOLN = np.load('analytic_soln.npy')  # Analytical solution
 
 
@@ -111,7 +111,21 @@ def rl_episode(agent, environment):
     agent.agent_end()
 
 
-def rl_experiment(sigma, agent_class, n, alpha, gamma, sigma_factor, env_class, num_episodes, num_runs):
+def rl_run(agent, environment, num_episodes):
+    rmse = np.zeros(num_episodes)  # Initialize array that stores RMSE for each episode
+    agent.agent_reset()  # Reset agent
+
+    # Run the agent through the environment for num_episodes
+    for i in range(num_episodes):
+        rl_episode(agent, environment)
+        ep_q = agent.q
+        squared_err = np.power((np.subtract(ANALYTIC_SOLN, ep_q)), 2)
+        tse = np.sum(squared_err)
+        rmse[i] = (tse / ep_q.size) ** (1 / 2)  # Calculate RMSE for current episode number
+    return rmse
+
+
+def rl_experiment(agent_class, n, alpha, gamma, sigma, sigma_factor, env_class, num_episodes, num_runs):
     """
     Determines the root mean squared error between the agent's q after a number of episodes and the true analytical solution, averaged over a number of runs
     :param agent_class: Q(sigma) agent class
@@ -125,21 +139,13 @@ def rl_experiment(sigma, agent_class, n, alpha, gamma, sigma_factor, env_class, 
     :param num_runs: Total number of runs the agent completes
     :return: Root mean squared error of Q for each episode, standard error of Q for each episode
     """
-    rmse = np.zeros((num_episodes, num_runs))  # Initialize array that stores RMSE for each episode
     agent = agent_class(n, alpha, gamma, sigma, sigma_factor)
     environment = env_class()
 
-    for i in range(num_runs):
-        agent.agent_reset()  # Reset agent by re-initializing its action-value function
-        # Run the agent through the environment for num_episodes
-        for j in range(num_episodes):
-            rl_episode(agent, environment)
-            ep_q = agent.q
-            squared_err = np.power((np.subtract(ANALYTIC_SOLN, ep_q)), 2)
-            tse = np.sum(squared_err)
-            rmse[j][i] = (tse / ep_q.size) ** (1 / 2)  # Calculate RMSE for current episode number
-    mean_rmse = np.mean(rmse, axis=1)
-    stde_rmse = np.std(rmse, axis=1) / np.sqrt(num_runs)
+    with Pool(cpu_count()) as pool:
+        rmse = pool.starmap(rl_run, itertools.repeat((agent, environment, num_episodes), times=num_runs))
+    mean_rmse = np.mean(rmse, axis=0)
+    stde_rmse = np.std(rmse, axis=0) / np.sqrt(num_runs)
     return mean_rmse, stde_rmse
 
 
@@ -151,37 +157,30 @@ def main():
     episodes = range(1, NUM_EPISODES + 1)  # x-axis
 
     #== CONSTANT SIGMA ==#
+    mean_rmse = np.zeros((NUM_EPISODES, len(SIGMA)))
+    stde_rmse = np.zeros((NUM_EPISODES, len(SIGMA)))
     # Parallelize experiments over the constant sigma values
-    with Pool(cpu_count()) as pool:
-        fixed_results = pool.map(partial(rl_experiment,
-                                         agent_class=EpisodicRandomAgent,
-                                         n=N,
-                                         alpha=ALPHA,
-                                         gamma=GAMMA,
-                                         sigma_factor=1,
-                                         env_class=WalkEnvironment,
-                                         num_episodes=NUM_EPISODES,
-                                         num_runs=NUM_RUNS),
-                                 SIGMA)
-    mean_rmse, stde_rmse = zip(*fixed_results)
+    for i in range(len(SIGMA)):
+        sigma_val = SIGMA[i]
+        mean_rmse[:, i], stde_rmse[:, i] = rl_experiment(EpisodicRandomAgent, N, ALPHA, GAMMA, sigma_val, 1, WalkEnvironment, NUM_EPISODES, NUM_RUNS)
 
     #== DYNAMIC SIGMA (EPISODE) ==#
-    mean_rmse_ep, stde_rmse_ep = rl_experiment(1, EpisodicRandomAgent, N, ALPHA, GAMMA, SIGMA_FACTOR, WalkEnvironment, NUM_EPISODES, NUM_RUNS)
+    mean_rmse_ep, stde_rmse_ep = rl_experiment(EpisodicRandomAgent, N, ALPHA, GAMMA, 1, SIGMA_FACTOR, WalkEnvironment, NUM_EPISODES, NUM_RUNS)
 
     #== DYNAMIC SIGMA (FREQUENCY, RAW) ==#
-    mean_rmse_freq_raw, stde_rmse_freq_raw = rl_experiment(1, FrequencyRawRandomAgent, N, ALPHA, GAMMA, SIGMA_FACTOR, WalkEnvironment, NUM_EPISODES, NUM_RUNS)
+    mean_rmse_freq_raw, stde_rmse_freq_raw = rl_experiment(FrequencyRawRandomAgent, N, ALPHA, GAMMA, 1, SIGMA_FACTOR, WalkEnvironment, NUM_EPISODES, NUM_RUNS)
 
     #== DYNAMIC SIGMA (FREQUENCY, MEAN) ==#
-    mean_rmse_freq_mean, stde_rmse_freq_mean = rl_experiment(1, FrequencyMeanRandomAgent, N, ALPHA, GAMMA, SIGMA_FACTOR, WalkEnvironment, NUM_EPISODES, NUM_RUNS)
+    mean_rmse_freq_mean, stde_rmse_freq_mean = rl_experiment(FrequencyMeanRandomAgent, N, ALPHA, GAMMA, 1, SIGMA_FACTOR, WalkEnvironment, NUM_EPISODES, NUM_RUNS)
 
     # Plot final results
     plt.figure()
     plt.plot(episodes, mean_rmse_ep, label=r'Dynamic $\sigma$ (Episode)')
     plt.plot(episodes, mean_rmse_freq_raw, label=r'Dynamic $\sigma$ (Frequency, Raw)')
     plt.plot(episodes, mean_rmse_freq_mean, label=r'Dynamic $\sigma$ (Frequency, Mean)')
-    for k in range(len(mean_rmse)):
+    for k in range(len(SIGMA)):
         sigma_val = SIGMA[k]
-        plt.plot(episodes, mean_rmse[k][:], label=(r'$\sigma = {}$'.format(sigma_val)))
+        plt.plot(episodes, mean_rmse[:, k], label=(r'$\sigma = {}$'.format(sigma_val)))
     plt.xlabel('Episodes')
     plt.ylabel('RMS Error')
     plt.title(r'Q($\sigma$) Curves for 19-State Random Walk')
@@ -192,9 +191,9 @@ def main():
     plt.errorbar(episodes, mean_rmse_ep, yerr=stde_rmse_ep, capsize=5, label=r'Dynamic $\sigma$ (Episode)')
     plt.errorbar(episodes, mean_rmse_freq_raw, yerr=stde_rmse_freq_raw, capsize=5, label=r'Dynamic $\sigma$ (Frequency, Raw)')
     plt.errorbar(episodes, mean_rmse_freq_mean, yerr=stde_rmse_freq_mean, capsize=5, label=r'Dynamic $\sigma$ (Frequency, Mean)')
-    # for k in range(len(mean_rmse)):
+    # for k in range(len(SIGMA)):
     #     sigma_val = SIGMA[k]
-    #     plt.errorbar(episodes, mean_rmse[k][:], yerr=stde_rmse[k][:], capsize=5, label=(r'$\sigma = {}$'.format(sigma_val)))
+    #     plt.errorbar(episodes, mean_rmse[:, k], yerr=stde_rmse[:, k], capsize=5, label=(r'$\sigma = {}$'.format(sigma_val)))
     plt.xlabel('Episodes')
     plt.ylabel('RMS Error')
     plt.title(r'Dynamic Q($\sigma$) Curves for 19-State Random Walk with Error Bars')
@@ -207,4 +206,5 @@ def main():
 
 
 if __name__ == '__main__':
+    freeze_support()
     main()
