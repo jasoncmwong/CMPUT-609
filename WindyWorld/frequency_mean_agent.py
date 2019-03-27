@@ -1,7 +1,7 @@
 import numpy as np
 
 
-class FrequencyRandomAgent():
+class FrequencyMeanAgent:
     """
     Q(sigma) agent that uses an equiprobable random policy
         POLICY:
@@ -9,45 +9,44 @@ class FrequencyRandomAgent():
         SIGMA:
         -FREQUENCY DYNAMIC: starts at 1, and modified after every episode based on the frequency distribution and sigma_factor
     """
-    def __init__(self, n, alpha, gamma, sigma_factor, epsilon, use_mean):
+    def __init__(self, n, alpha, gamma, sigma, sigma_factor, epsilon):
         """
         :param n: Number of steps used in update
         :param alpha: Step size
         :param gamma: Discount factor
+        :param sigma: Starting degree of sampling
         :param sigma_factor: Multiplicative factor used to reduce sigma
         """
         self.num_rows = 7  # Number of y coordinates in the environment
         self.num_cols = 10  # Number of x coordinates in the environment
         self.num_actions = 4  # Number of actions that the agent can take
-        self.ep_num = 0
-        self.sigma = np.full((self.num_states, self.num_actions), 1, dtype=float)  # Degree of sampling
-        self.sa_distr = None  # Number of times state-action pairs are visited
+        self.ep_num = 0  # Episode number tracker
 
         self.n = n  # Number of steps
         self.alpha = alpha  # Step size
         self.gamma = gamma  # Discount factor
+        self.sigma = np.full((self.num_rows, self.num_cols), sigma, dtype=float)  # Starting degree of sampling
         self.sigma_factor = sigma_factor  # Multiplicative factor that is used to reduce maximum sigma
         self.epsilon = epsilon  # Probability of agent taking a random action
-        self.use_mean = use_mean  # Flag on whether to use raw frequency distribution or mean/st.d in sigma calculation
+
+        self.q = None  # Estimates of the reward for each state-action pair
+        self.state_distr = None  # Number of times a state is visited
 
         self.prev_state = None  # Previous state the agent was in
         self.prev_action = None  # Previous action the agent took
 
-        self.q = None  # Estimates of the reward for each action
-
-    def agent_init(self):
+    def agent_reset(self):
         """
-        Arbitrarily initializes the action-value function of the agent
+        Resets the action-value function and state distribution of the agent
         """
-        # Initialize action-value function with all 0's
         self.q = np.full((self.num_rows, self.num_cols, self.num_actions), 0, dtype=float)
-        self.sa_distr = np.full((self.num_rows, self.num_cols, self.num_actions), 0)
+        self.state_distr = np.full((self.num_rows, self.num_cols), 0)
 
     def agent_start(self, state):
         """
         Starts the agent in the environment and makes an action
         :param state: Starting state (based on the environment)
-        :return: Action the agent takes (index), policy for that state, sigma for the state-action pair
+        :return: Action the agent takes (index), policy for that state, sigma for the state
         """
         # Set previous state as starting state
         self.prev_state = state
@@ -56,14 +55,15 @@ class FrequencyRandomAgent():
         (self.prev_action, pi) = self.make_action(state)
 
         # Update state-action distribution
-        self.sa_distr[state[0]][state[1]][self.prev_action] += 1
+        self.state_distr[self.prev_state[0]][self.prev_state[1]] += 1
 
-        return (self.prev_action, pi, self.sigma[state[0]][state[1]][self.prev_action])
+        return self.prev_action, pi, self.sigma[self.prev_state[0]][self.prev_state[1]]
 
     def make_action(self, state):
         """
         Determines the action that the agent takes (using an epsilon-greedy algorithm)
-        :return: Action the agent takes (index), policy for that state
+        :param state: State the agent is currently in
+        :return: Action the agent takes (index), policy for the state
         """
         pi = np.full(self.num_actions, 0, dtype=float)
         greedy_actions = self.choose_greedy(state)
@@ -82,7 +82,7 @@ class FrequencyRandomAgent():
     def choose_greedy(self, state):
         """
         Determines the optimal action according to q
-        :param state: State the agent is currently in
+        :param state: Current state the agent is in
         :return: Array of possible greedy actions
         """
         greedy_actions = np.ravel(np.argwhere(self.q[state[0], state[1], :] == np.max(self.q[state[0], state[1], :])))
@@ -93,7 +93,7 @@ class FrequencyRandomAgent():
         """
         Takes another step in the environment by taking an action
         :param state: Current state the agent is in
-        :return: Action the agent takes (index), policy for that state, sigma for the state-action pair
+        :return: Action the agent takes (index), policy for the state, sigma for the state-action pair
         """
         # Choose next action
         (action, pi) = self.make_action(state)
@@ -102,10 +102,10 @@ class FrequencyRandomAgent():
         self.prev_state = state
         self.prev_action = action
 
-        # Update state-action distribution
-        self.sa_distr[state[0]][state[1]][self.prev_action] += 1
+        # Update state distribution
+        self.state_distr[self.prev_state[0]][self.prev_state[1]] += 1
 
-        return (self.prev_action, pi, self.sigma[state[0]][state[1]][self.prev_action])
+        return self.prev_action, pi, self.sigma[self.prev_state[0]][self.prev_state[1]]
 
     def agent_end(self):
         """
@@ -114,25 +114,22 @@ class FrequencyRandomAgent():
         self.ep_num += 1
 
         # Calculate current frequency distribution
-        tot_visits = np.sum(self.sa_distr)
-        freq_distr = self.sa_distr / tot_visits
+        tot_visits = np.sum(self.state_distr)
+        freq_distr = self.state_distr / tot_visits
 
-        if self.use_mean:  # Use mean and standard deviation thresholds
-            # Determine thresholds for sigma extremes
-            freq_mean = np.mean(freq_distr)
-            freq_std = np.std(freq_distr)
-            up_thresh = (freq_mean + freq_std) * np.power(self.sigma_factor, self.ep_num)
-            bot_thresh = (freq_mean - freq_std) * np.power(self.sigma_factor, self.ep_num)
+        # Determine thresholds for sigma extremes
+        freq_mean = np.mean(freq_distr)
+        freq_std = np.std(freq_distr)
+        up_thresh = (freq_mean + freq_std) * np.power(self.sigma_factor, self.ep_num)
+        bot_thresh = (freq_mean - freq_std) * np.power(self.sigma_factor, self.ep_num)
 
-            # Set sigma according to thresholds
-            for i in range(self.num_states):
-                for j in range(self.num_actions):
-                    curr_freq = freq_distr[i][j]
-                    if curr_freq > up_thresh:  # Visited enough - perform expectation updates
-                        self.sigma[i][j] = 0
-                    elif curr_freq < bot_thresh:  # Not visited enough - perform full sampling
-                        self.sigma[i][j] = 1
-                    else:  # In the middle - use intermediate sigma
-                        self.sigma[i][j] = 1 - (curr_freq - bot_thresh)/(2*freq_std*np.power(self.sigma_factor, self.ep_num))
-        else:  # Use the raw frequency distribution reduced by the multiplicative factor
-            self.sigma = (1 - freq_distr) * np.power(self.sigma_factor, self.ep_num)
+        # Set sigma according to thresholds
+        for i in range(self.num_rows):
+            for j in range(self.num_cols):
+                curr_freq = freq_distr[i][j]
+                if curr_freq > up_thresh:  # Visited enough - perform expectation updates
+                    self.sigma[i][j] = 0
+                elif curr_freq < bot_thresh:  # Not visited enough - perform full sampling
+                    self.sigma[i][j] = 1
+                else:  # In the middle - use intermediate sigma
+                    self.sigma[i][j] = 1 - (curr_freq - bot_thresh)/(2*freq_std*np.power(self.sigma_factor, self.ep_num))

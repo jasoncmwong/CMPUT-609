@@ -1,49 +1,52 @@
 import numpy as np
 
 
-class EpisodicRandomAgent():
+class FrequencyRawAgent:
     """
     Q(sigma) agent that uses an equiprobable random policy
         POLICY:
         -EPSILON-GREEDY
         SIGMA:
-        -EPISODE DYNAMIC: starts at 1, and reduced by a factor of sigma_factor every episode
+        -FREQUENCY DYNAMIC: starts at 1, and modified after every episode based on the frequency distribution and sigma_factor
     """
-    def __init__(self, n, alpha, gamma, sigma_factor, epsilon):
+    def __init__(self, n, alpha, gamma, sigma, sigma_factor, epsilon):
         """
         :param n: Number of steps used in update
         :param alpha: Step size
         :param gamma: Discount factor
+        :param sigma: Starting degree of sampling
         :param sigma_factor: Multiplicative factor used to reduce sigma
         """
         self.num_rows = 7  # Number of y coordinates in the environment
         self.num_cols = 10  # Number of x coordinates in the environment
         self.num_actions = 4  # Number of actions that the agent can take
-        self.sigma = 1  # Degree of sampling
+        self.ep_num = 0  # Episode number tracker
 
         self.n = n  # Number of steps
         self.alpha = alpha  # Step size
         self.gamma = gamma  # Discount factor
-        self.sigma_factor = sigma_factor
-        self.epsilon = epsilon  # Probability of choosing a random action
+        self.sigma = np.full((self.num_rows, self.num_cols), sigma, dtype=float)  # Starting degree of sampling
+        self.sigma_factor = sigma_factor  # Multiplicative factor that is used to reduce maximum sigma
+        self.epsilon = epsilon  # Probability of agent taking a random action
+
+        self.q = None  # Estimates of the reward for each state-action pair
+        self.state_distr = None  # Number of times a state is visited
 
         self.prev_state = None  # Previous state the agent was in
         self.prev_action = None  # Previous action the agent took
 
-        self.q = None  # Estimates of the reward for each action
-
-    def agent_init(self):
+    def agent_reset(self):
         """
-        Arbitrarily initializes the action-value function of the agent
+        Resets the action-value function and state distribution of the agent
         """
-        # Initialize action-value function with all 0's
         self.q = np.full((self.num_rows, self.num_cols, self.num_actions), 0, dtype=float)
+        self.state_distr = np.full((self.num_rows, self.num_cols), 0)
 
     def agent_start(self, state):
         """
         Starts the agent in the environment and makes an action
         :param state: Starting state (based on the environment)
-        :return: Action the agent takes (index), policy for that state, sigma for the state-action pair
+        :return: Action the agent takes (index), policy for that state, sigma for the state
         """
         # Set previous state as starting state
         self.prev_state = state
@@ -51,12 +54,16 @@ class EpisodicRandomAgent():
         # Choose action
         (self.prev_action, pi) = self.make_action(state)
 
-        return (self.prev_action, pi)
+        # Update state-action distribution
+        self.state_distr[self.prev_state[0]][self.prev_state[1]] += 1
+
+        return self.prev_action, pi, self.sigma[self.prev_state[0]][self.prev_state[1]]
 
     def make_action(self, state):
         """
         Determines the action that the agent takes (using an epsilon-greedy algorithm)
-        :return: Action the agent takes (index), policy for that state
+        :param state: State the agent is currently in
+        :return: Action the agent takes (index), policy for the state
         """
         pi = np.full(self.num_actions, 0, dtype=float)
         greedy_actions = self.choose_greedy(state)
@@ -70,12 +77,12 @@ class EpisodicRandomAgent():
 
         action = np.random.choice(range(self.num_actions), p=pi)
 
-        return (action, pi)
+        return action, pi
 
     def choose_greedy(self, state):
         """
         Determines the optimal action according to q
-        :param state: State the agent is currently in
+        :param state: Current state the agent is in
         :return: Array of possible greedy actions
         """
         greedy_actions = np.ravel(np.argwhere(self.q[state[0], state[1], :] == np.max(self.q[state[0], state[1], :])))
@@ -86,7 +93,7 @@ class EpisodicRandomAgent():
         """
         Takes another step in the environment by taking an action
         :param state: Current state the agent is in
-        :return: Action the agent takes (index), policy for that state
+        :return: Action the agent takes (index), policy for the state, sigma for the state-action pair
         """
         # Choose next action
         (action, pi) = self.make_action(state)
@@ -95,11 +102,20 @@ class EpisodicRandomAgent():
         self.prev_state = state
         self.prev_action = action
 
-        return (self.prev_action, pi)
+        # Update state distribution
+        self.state_distr[self.prev_state[0]][self.prev_state[1]] += 1
+
+        return self.prev_action, pi, self.sigma[self.prev_state[0]][self.prev_state[1]]
 
     def agent_end(self):
         """
         Signals the end of the episode for an agent.
         """
-        # Reduce sigma by a constant factor
-        self.sigma *= self.sigma_factor
+        self.ep_num += 1
+
+        # Calculate current frequency distribution
+        tot_visits = np.sum(self.state_distr)
+        freq_distr = self.state_distr / tot_visits
+
+        # Set sigma according to raw frequency distribution
+        self.sigma = (1 - freq_distr) * np.power(self.sigma_factor, self.ep_num)
