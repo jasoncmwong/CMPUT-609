@@ -112,6 +112,13 @@ def rl_episode(agent, environment):
 
 
 def rl_run(agent, environment, num_episodes):
+    """
+    Performs one run of an agent with the environment for a given number of episodes
+    :param agent: Q(sigma) agent
+    :param environment: Environment that the agent interacts with
+    :param num_episodes: Total number of episodes the agent completes
+    :return: Root mean squared error of Q for each episode
+    """
     rmse = np.zeros(num_episodes)  # Initialize array that stores RMSE for each episode
     agent.agent_reset()  # Reset agent
 
@@ -122,6 +129,7 @@ def rl_run(agent, environment, num_episodes):
         squared_err = np.power((np.subtract(ANALYTIC_SOLN, ep_q)), 2)
         tse = np.sum(squared_err)
         rmse[i] = (tse / ep_q.size) ** (1 / 2)  # Calculate RMSE for current episode number
+
     return rmse
 
 
@@ -137,15 +145,17 @@ def rl_experiment(agent_class, n, alpha, gamma, sigma, sigma_factor, env_class, 
     :param env_class: Environment class that the agent interacts with
     :param num_episodes: Total number of episodes the agent completes
     :param num_runs: Total number of runs the agent completes
-    :return: Root mean squared error of Q for each episode, standard error of Q for each episode
+    :return: Mean root mean squared error of Q for each episode, standard error of Q for each episode
     """
     agent = agent_class(n, alpha, gamma, sigma, sigma_factor)
     environment = env_class()
 
+    # Parallelize over the number of runs
     with Pool(cpu_count()) as pool:
         rmse = pool.starmap(rl_run, itertools.repeat((agent, environment, num_episodes), times=num_runs))
     mean_rmse = np.mean(rmse, axis=0)
     stde_rmse = np.std(rmse, axis=0) / np.sqrt(num_runs)
+
     return mean_rmse, stde_rmse
 
 
@@ -198,7 +208,6 @@ def main():
     plt.ylabel('RMS Error')
     plt.title(r'Dynamic Q($\sigma$) Curves for 19-State Random Walk with Error Bars')
     plt.legend(prop={'size': 20})
-
     plt.show()
 
 
