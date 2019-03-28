@@ -15,7 +15,7 @@ NUM_ACTIONS = 4
 
 # Agent
 N = 3
-ALPHA = np.array([1/16, 1/8, 1/4, 1/2])
+ALPHA = np.array([1/16, 1/8, 1/4, 1/2, 3/4, 1])
 GAMMA = 1.0
 EPSILON = 0.1
 SIGMA = np.array([0, 0.5, 1])
@@ -213,8 +213,9 @@ def main():
     plt.ylabel('Average Return per Episode')
     plt.title(r'Q($\sigma$) Curves for Stochastic Windy Grid World')
     plt.legend(prop={'size': 20})
+    plt.savefig('C:/Users/Jason/Dropbox/University/Grad School/Winter Term/CMPUT 609/Project/windy_dynamic_sigma.svg')
 
-    # Plot with errorbars
+    # Plot with error bars
     plt.figure()
     plt.errorbar(ALPHA, mean_rwd_ep, yerr=stde_rwd_ep, capsize=5, label=r'Dynamic $\sigma$ (Episode)')
     plt.errorbar(ALPHA, mean_rwd_freq_raw, yerr=stde_rwd_freq_raw, capsize=5, label=r'Dynamic $\sigma$ (Frequency, Raw)')
@@ -226,6 +227,8 @@ def main():
     plt.ylabel('Average Return per Episode')
     plt.title(r'Q($\sigma$) Curves for Stochastic Windy Grid World')
     plt.legend(prop={'size': 20})
+    plt.savefig('C:/Users/Jason/Dropbox/University/Grad School/Winter Term/CMPUT 609/Project/windy_dynamic_sigma_errbar.svg')
+    plt.show()
 
     print("Complete\n")
 
