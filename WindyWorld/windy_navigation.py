@@ -19,7 +19,8 @@ ALPHA = np.array([1/16, 1/8, 1/4, 1/2, 3/4, 1])
 GAMMA = 1.0
 EPSILON = 0.1
 SIGMA = np.array([0, 0.5, 1])
-SIGMA_FACTOR = 0.95
+EP_SIGMA_FACTOR = 0.95
+FREQ_SIGMA_FACTOR = 0.9
 
 # Experiment
 NUM_EPISODES = 100
@@ -185,21 +186,21 @@ def main():
     stde_rwd_ep = np.zeros(len(ALPHA))
     for j in range(len(ALPHA)):
         alpha_val = ALPHA[j]
-        mean_rwd_ep[j], stde_rwd_ep[j] = rl_experiment(EpisodicAgent, N, alpha_val, GAMMA, 1, SIGMA_FACTOR, EPSILON, WindyEnvironment, NUM_EPISODES, NUM_RUNS)
+        mean_rwd_ep[j], stde_rwd_ep[j] = rl_experiment(EpisodicAgent, N, alpha_val, GAMMA, 1, EP_SIGMA_FACTOR, EPSILON, WindyEnvironment, NUM_EPISODES, NUM_RUNS)
 
     #== DYNAMIC SIGMA (FREQUENCY, RAW) ==#
     mean_rwd_freq_raw = np.zeros(len(ALPHA))
     stde_rwd_freq_raw = np.zeros(len(ALPHA))
     for j in range(len(ALPHA)):
         alpha_val = ALPHA[j]
-        mean_rwd_freq_raw[j], stde_rwd_freq_raw[j] = rl_experiment(FrequencyRawAgent, N, alpha_val, GAMMA, 1, SIGMA_FACTOR, EPSILON, WindyEnvironment, NUM_EPISODES, NUM_RUNS)
+        mean_rwd_freq_raw[j], stde_rwd_freq_raw[j] = rl_experiment(FrequencyRawAgent, N, alpha_val, GAMMA, 1, FREQ_SIGMA_FACTOR, EPSILON, WindyEnvironment, NUM_EPISODES, NUM_RUNS)
 
     #== DYNAMIC SIGMA (FREQUENCY, MEAN) ==#
     mean_rwd_freq_mean = np.zeros(len(ALPHA))
     stde_rwd_freq_mean = np.zeros(len(ALPHA))
     for j in range(len(ALPHA)):
         alpha_val = ALPHA[j]
-        mean_rwd_freq_mean[j], stde_rwd_freq_mean[j] = rl_experiment(FrequencyMeanAgent, N, alpha_val, GAMMA, 1, SIGMA_FACTOR, EPSILON, WindyEnvironment, NUM_EPISODES, NUM_RUNS)
+        mean_rwd_freq_mean[j], stde_rwd_freq_mean[j] = rl_experiment(FrequencyMeanAgent, N, alpha_val, GAMMA, 1, FREQ_SIGMA_FACTOR, EPSILON, WindyEnvironment, NUM_EPISODES, NUM_RUNS)
 
     # Plot final results
     plt.figure()
