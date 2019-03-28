@@ -185,7 +185,7 @@ def main():
     mean_rmse_freq_mean, stde_rmse_freq_mean = rl_experiment(FrequencyMeanRandomAgent, N, ALPHA, GAMMA, 1, FREQ_SIGMA_FACTOR, WalkEnvironment, NUM_EPISODES, NUM_RUNS)
 
     # Plot final results
-    plt.figure()
+    plt.figure(figsize=(18.5, 10.5))
     plt.plot(episodes, mean_rmse_ep, label=r'Dynamic $\sigma$ (Episode)')
     plt.plot(episodes, mean_rmse_freq_raw, label=r'Dynamic $\sigma$ (Frequency, Raw)')
     plt.plot(episodes, mean_rmse_freq_mean, label=r'Dynamic $\sigma$ (Frequency, Mean)')
@@ -199,7 +199,7 @@ def main():
     plt.savefig('C:/Users/Jason/Dropbox/University/Grad School/Winter Term/CMPUT 609/Project/walk_results.svg')
 
     # Plot with errorbars
-    plt.figure()
+    plt.figure(figsize=(18.5, 10.5))
     plt.errorbar(episodes, mean_rmse_ep, yerr=stde_rmse_ep, capsize=5, label=r'Dynamic $\sigma$ (Episode)')
     plt.errorbar(episodes, mean_rmse_freq_raw, yerr=stde_rmse_freq_raw, capsize=5, label=r'Dynamic $\sigma$ (Frequency, Raw)')
     plt.errorbar(episodes, mean_rmse_freq_mean, yerr=stde_rmse_freq_mean, capsize=5, label=r'Dynamic $\sigma$ (Frequency, Mean)')
@@ -212,7 +212,6 @@ def main():
     plt.legend(prop={'size': 20})
     plt.savefig('C:/Users/Jason/Dropbox/University/Grad School/Winter Term/CMPUT 609/Project/walk_results_errbar.svg')
     plt.show()
-
 
     print("Complete\n")
 

@@ -203,7 +203,7 @@ def main():
         mean_rwd_freq_mean[j], stde_rwd_freq_mean[j] = rl_experiment(FrequencyMeanAgent, N, alpha_val, GAMMA, 1, FREQ_SIGMA_FACTOR, EPSILON, WindyEnvironment, NUM_EPISODES, NUM_RUNS)
 
     # Plot final results
-    plt.figure()
+        plt.figure(figsize=(18.5, 10.5))
     plt.plot(ALPHA, mean_rwd_ep, label=r'Dynamic $\sigma$ (Episode)')
     plt.plot(ALPHA, mean_rwd_freq_raw, label=r'Dynamic $\sigma$ (Frequency, Raw)')
     plt.plot(ALPHA, mean_rwd_freq_mean, label=r'Dynamic $\sigma$ (Frequency, Mean)')
@@ -217,7 +217,7 @@ def main():
     plt.savefig('C:/Users/Jason/Dropbox/University/Grad School/Winter Term/CMPUT 609/Project/windy_results.svg')
 
     # Plot with error bars
-    plt.figure()
+    plt.figure(figsize=(18.5, 10.5))
     plt.errorbar(ALPHA, mean_rwd_ep, yerr=stde_rwd_ep, capsize=5, label=r'Dynamic $\sigma$ (Episode)')
     plt.errorbar(ALPHA, mean_rwd_freq_raw, yerr=stde_rwd_freq_raw, capsize=5, label=r'Dynamic $\sigma$ (Frequency, Raw)')
     plt.errorbar(ALPHA, mean_rwd_freq_mean, yerr=stde_rwd_freq_mean, capsize=5, label=r'Dynamic $\sigma$ (Frequency, Mean)')
