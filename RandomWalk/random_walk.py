@@ -195,6 +195,7 @@ def main():
     plt.ylabel('RMS Error')
     plt.title(r'Q($\sigma$) Curves for 19-State Random Walk')
     plt.legend(prop={'size': 20})
+    plt.savefig('C:/Users/Jason/Dropbox/University/Grad School/Winter Term/CMPUT 609/Project/walk_results.svg')
 
     # Plot with errorbars
     plt.figure()
@@ -208,6 +209,7 @@ def main():
     plt.ylabel('RMS Error')
     plt.title(r'Dynamic Q($\sigma$) Curves for 19-State Random Walk with Error Bars')
     plt.legend(prop={'size': 20})
+    plt.savefig('C:/Users/Jason/Dropbox/University/Grad School/Winter Term/CMPUT 609/Project/walk_dynamic_sigma_errbar.svg')
     plt.show()
 
 

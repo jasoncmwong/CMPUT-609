@@ -213,7 +213,7 @@ def main():
     plt.ylabel('Average Return per Episode')
     plt.title(r'Q($\sigma$) Curves for Stochastic Windy Grid World')
     plt.legend(prop={'size': 20})
-    plt.savefig('C:/Users/Jason/Dropbox/University/Grad School/Winter Term/CMPUT 609/Project/windy_dynamic_sigma.svg')
+    plt.savefig('C:/Users/Jason/Dropbox/University/Grad School/Winter Term/CMPUT 609/Project/windy_results.svg')
 
     # Plot with error bars
     plt.figure()
