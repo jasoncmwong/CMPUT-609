@@ -19,7 +19,8 @@ N = 3
 ALPHA = 0.4
 GAMMA = 1.0
 SIGMA = np.array([0, 0.25, 0.5, 0.75, 1])
-SIGMA_FACTOR = 0.95
+EP_SIGMA_FACTOR = 0.95
+FREQ_SIGMA_FACTOR = 0.9
 
 # Experiment
 NUM_EPISODES = 250
@@ -170,27 +171,27 @@ def main():
     mean_rmse = np.zeros((NUM_EPISODES, len(SIGMA)))
     stde_rmse = np.zeros((NUM_EPISODES, len(SIGMA)))
     # Parallelize experiments over the constant sigma values
-    for i in range(len(SIGMA)):
-        sigma_val = SIGMA[i]
-        mean_rmse[:, i], stde_rmse[:, i] = rl_experiment(EpisodicRandomAgent, N, ALPHA, GAMMA, sigma_val, 1, WalkEnvironment, NUM_EPISODES, NUM_RUNS)
+    # for i in range(len(SIGMA)):
+    #     sigma_val = SIGMA[i]
+    #     mean_rmse[:, i], stde_rmse[:, i] = rl_experiment(EpisodicRandomAgent, N, ALPHA, GAMMA, sigma_val, 1, WalkEnvironment, NUM_EPISODES, NUM_RUNS)
 
     #== DYNAMIC SIGMA (EPISODE) ==#
-    mean_rmse_ep, stde_rmse_ep = rl_experiment(EpisodicRandomAgent, N, ALPHA, GAMMA, 1, SIGMA_FACTOR, WalkEnvironment, NUM_EPISODES, NUM_RUNS)
+    mean_rmse_ep, stde_rmse_ep = rl_experiment(EpisodicRandomAgent, N, ALPHA, GAMMA, 1, EP_SIGMA_FACTOR, WalkEnvironment, NUM_EPISODES, NUM_RUNS)
 
     #== DYNAMIC SIGMA (FREQUENCY, RAW) ==#
-    mean_rmse_freq_raw, stde_rmse_freq_raw = rl_experiment(FrequencyRawRandomAgent, N, ALPHA, GAMMA, 1, SIGMA_FACTOR, WalkEnvironment, NUM_EPISODES, NUM_RUNS)
+    mean_rmse_freq_raw, stde_rmse_freq_raw = rl_experiment(FrequencyRawRandomAgent, N, ALPHA, GAMMA, 1, FREQ_SIGMA_FACTOR, WalkEnvironment, NUM_EPISODES, NUM_RUNS)
 
     #== DYNAMIC SIGMA (FREQUENCY, MEAN) ==#
-    mean_rmse_freq_mean, stde_rmse_freq_mean = rl_experiment(FrequencyMeanRandomAgent, N, ALPHA, GAMMA, 1, SIGMA_FACTOR, WalkEnvironment, NUM_EPISODES, NUM_RUNS)
+    mean_rmse_freq_mean, stde_rmse_freq_mean = rl_experiment(FrequencyMeanRandomAgent, N, ALPHA, GAMMA, 1, FREQ_SIGMA_FACTOR, WalkEnvironment, NUM_EPISODES, NUM_RUNS)
 
     # Plot final results
     plt.figure()
     plt.plot(episodes, mean_rmse_ep, label=r'Dynamic $\sigma$ (Episode)')
     plt.plot(episodes, mean_rmse_freq_raw, label=r'Dynamic $\sigma$ (Frequency, Raw)')
     plt.plot(episodes, mean_rmse_freq_mean, label=r'Dynamic $\sigma$ (Frequency, Mean)')
-    for k in range(len(SIGMA)):
-        sigma_val = SIGMA[k]
-        plt.plot(episodes, mean_rmse[:, k], label=(r'$\sigma = {}$'.format(sigma_val)))
+    # for k in range(len(SIGMA)):
+    #     sigma_val = SIGMA[k]
+    #     plt.plot(episodes, mean_rmse[:, k], label=(r'$\sigma = {}$'.format(sigma_val)))
     plt.xlabel('Episodes')
     plt.ylabel('RMS Error')
     plt.title(r'Q($\sigma$) Curves for 19-State Random Walk')
@@ -209,7 +210,7 @@ def main():
     plt.ylabel('RMS Error')
     plt.title(r'Dynamic Q($\sigma$) Curves for 19-State Random Walk with Error Bars')
     plt.legend(prop={'size': 20})
-    plt.savefig('C:/Users/Jason/Dropbox/University/Grad School/Winter Term/CMPUT 609/Project/walk_dynamic_sigma_errbar.svg')
+    plt.savefig('C:/Users/Jason/Dropbox/University/Grad School/Winter Term/CMPUT 609/Project/walk_results_errbar.svg')
     plt.show()
 
 
