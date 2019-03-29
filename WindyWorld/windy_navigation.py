@@ -226,9 +226,9 @@ def main():
     #     plt.errorbar(ALPHA, mean_rwd[:, k], yerr=stde_rwd[:, k], capsize=5, label=(r'$\sigma = {}$'.format(sigma_val)))
     plt.xlabel(r'Step Size $\alpha$')
     plt.ylabel('Average Return per Episode')
-    plt.title(r'Q($\sigma$) Curves for Stochastic Windy Grid World')
+    plt.title(r'Q($\sigma$) Curves for Stochastic Windy Grid World with Error Bars')
     plt.legend(prop={'size': 20})
-    plt.savefig('C:/Users/Jason/Dropbox/University/Grad School/Winter Term/CMPUT 609/Project/windy_dynamic_sigma_errbar.svg')
+    plt.savefig('C:/Users/Jason/Dropbox/University/Grad School/Winter Term/CMPUT 609/Project/windy_results_errbar.svg')
     plt.show()
 
     print("Complete\n")
