@@ -208,7 +208,7 @@ def main():
     #     plt.errorbar(episodes, mean_rmse[:, k], yerr=stde_rmse[:, k], capsize=5, label=(r'$\sigma = {}$'.format(sigma_val)))
     plt.xlabel('Episodes')
     plt.ylabel('RMS Error')
-    plt.title(r'Dynamic Q($\sigma$) Curves for 19-State Random Walk with Error Bars')
+    plt.title(r'Q($\sigma$) Curves for 19-State Random Walk with Error Bars')
     plt.legend(prop={'size': 20})
     plt.savefig('C:/Users/Jason/Dropbox/University/Grad School/Winter Term/CMPUT 609/Project/walk_results_errbar.svg')
     plt.show()
