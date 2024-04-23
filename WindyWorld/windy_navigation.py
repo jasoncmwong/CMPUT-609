@@ -14,7 +14,7 @@ from multiprocessing import Pool, freeze_support, cpu_count
 NUM_ACTIONS = 4
 
 # Agent
-N = 3
+N = 1
 ALPHA = np.array([1/16, 1/8, 1/4, 1/2, 3/4, 1])
 GAMMA = 1.0
 EPSILON = 0.1
@@ -172,14 +172,14 @@ def main():
     matplotlib.rcParams.update({'font.size': 30})
 
     #== CONSTANT SIGMA ==#
-    mean_rwd = np.zeros((len(ALPHA), len(SIGMA)))
-    stde_rwd = np.zeros((len(ALPHA), len(SIGMA)))
-    for i in range(len(SIGMA)):
-        sigma_val = SIGMA[i]
-
-        for j in range(len(ALPHA)):
-            alpha_val = ALPHA[j]
-            mean_rwd[j, i], stde_rwd[j, i] = rl_experiment(EpisodicAgent, N, alpha_val, GAMMA, sigma_val, 1, EPSILON, WindyEnvironment, NUM_EPISODES, NUM_RUNS)
+    # mean_rwd = np.zeros((len(ALPHA), len(SIGMA)))
+    # stde_rwd = np.zeros((len(ALPHA), len(SIGMA)))
+    # for i in range(len(SIGMA)):
+    #     sigma_val = SIGMA[i]
+    #
+    #     for j in range(len(ALPHA)):
+    #         alpha_val = ALPHA[j]
+    #         mean_rwd[j, i], stde_rwd[j, i] = rl_experiment(EpisodicAgent, N, alpha_val, GAMMA, sigma_val, 1, EPSILON, WindyEnvironment, NUM_EPISODES, NUM_RUNS)
 
     #== DYNAMIC SIGMA (EPISODE) ==#
     mean_rwd_ep = np.zeros(len(ALPHA))
@@ -202,14 +202,19 @@ def main():
         alpha_val = ALPHA[j]
         mean_rwd_freq_mean[j], stde_rwd_freq_mean[j] = rl_experiment(FrequencyMeanAgent, N, alpha_val, GAMMA, 1, FREQ_SIGMA_FACTOR, EPSILON, WindyEnvironment, NUM_EPISODES, NUM_RUNS)
 
+    n1_mean = np.vstack((mean_rwd_ep, mean_rwd_freq_raw, mean_rwd_freq_mean))
+    n1_stde = np.vstack((stde_rwd_ep, stde_rwd_freq_raw, stde_rwd_freq_mean))
+    n1_results = np.stack((n1_mean, n1_stde), axis=-1)
+    np.save('C:/Users/Jason/Dropbox/University/Grad School/Winter Term/CMPUT 609/Project/n1_results.npy', n1_results)
+
     # Plot final results
     plt.figure(figsize=(18.5, 10.5))
     plt.plot(ALPHA, mean_rwd_ep, label=r'Dynamic $\sigma$ (Episode)')
     plt.plot(ALPHA, mean_rwd_freq_raw, label=r'Dynamic $\sigma$ (Frequency, Raw)')
     plt.plot(ALPHA, mean_rwd_freq_mean, label=r'Dynamic $\sigma$ (Frequency, Mean)')
-    for k in range(len(SIGMA)):
-        sigma_val = SIGMA[k]
-        plt.plot(ALPHA, mean_rwd[:, k], label=(r'$\sigma= {}$'.format(sigma_val)))
+    # for k in range(len(SIGMA)):
+    #     sigma_val = SIGMA[k]
+    #     plt.plot(ALPHA, mean_rwd[:, k], label=(r'$\sigma= {}$'.format(sigma_val)))
     plt.xlabel(r'Step Size $\alpha$')
     plt.ylabel('Average Return per Episode')
     plt.title(r'Q($\sigma$) Curves for Stochastic Windy Grid World')
